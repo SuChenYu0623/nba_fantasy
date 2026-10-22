@@ -58,3 +58,20 @@ test('雷達：不再寫死 suggestedMax 100', () => {
   const html = buildRadarPage([{Team:'A','PTS_score':1.2}], 'chart.js', { weeks: 5 });
   assert.ok(!html.includes('suggestedMax: 100') && !html.includes('suggestedMax:100'));
 });
+
+// ===== Task 2：表格 fragment（heat + 發散條）與 timeAgo =====
+const { buildTableFragment, timeAgo } = require('../lib/render.js');
+function frow(team, pts, score, total, rank){ return {Rank:rank,Team:team,Total:total,'PTS':pts,'PTS_score':score,'PTS_rank':1}; }
+test('buildTableFragment：heat 著色、負 Total 發散條、不含 _score 欄/複合欄', () => {
+  const html = buildTableFragment([frow('A','30',1.5,-2.1,1), frow('烈焰<x>','10',-1.2,3.4,2)]);
+  assert.ok(/background/.test(html));        // 有色階
+  assert.ok(html.includes('-2.1'));          // 負 Total 不破版
+  assert.ok(!html.includes('_score') && !html.includes('FGM/A'));
+  assert.ok(html.includes('烈焰&lt;x&gt;')); // 跳脫
+});
+test('timeAgo 分桶', () => {
+  const now = 1_000_000_000_000;
+  assert.strictEqual(timeAgo(now-30_000, now), '剛剛');
+  assert.ok(/分鐘前$/.test(timeAgo(now-5*60_000, now)));
+  assert.ok(/小時前$/.test(timeAgo(now-3*3600_000, now)));
+});
