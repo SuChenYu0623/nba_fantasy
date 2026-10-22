@@ -1,7 +1,7 @@
 # 正規化升級 v2：跨週可比戰力值 設計文件
 
 日期：2026-10-22
-狀態：待審查
+狀態：**暫停中——待使用者驗證 live matchup 頁確實有「命中/出手」欄（FGM/A、FTM/A、3PTA）後，才進入實作計畫**（見 §8）
 
 ## 1. 背景與動機（Why）
 
@@ -46,6 +46,8 @@
   `impact = (隊比率 − 基準聯盟比率) × 該隊出手量`，再對 impact 做
   `score = (impact − 基準impact中位數) / 基準impactMAD`。
 - **Total ＝ 11 項 score 加總**。0 ≈ 平均、正為高於平均。
+- **缺值 / 無法解析**（含抓不到出手量）：該項 score 記 **中性 0**（＝等於平均），
+  不以「最差」計（此為相對 v1「缺值當最差」的刻意變更，使用者已確認）。
 
 出手量來自既有爬取結果中的 `FGM/A*`、`FTM/A*`、`3PTA*` 欄（key 可能帶 `*`）：
 由 `FGM/A`→FGA、`FTM/A`→FTA、`3PTA`→3PTA 解析（「45/90」取分母為出手量）。
@@ -60,6 +62,15 @@
 - **更新規則**：每跑完一週，把該週 per-team 值併入 pool、裁到上限、存回（cumulative）。
 - **Bootstrap（第 1 週 / 該聯盟無基準）**：以當週各隊作為初始 pool（該次等同當週自我相對），
   存入後往後逐週校準。
+
+以下為確認後補入的設計決定：
+- **以週次（week）為 key 存放**：重跑同一週 **取代** 該週的樣本，不重複累加（避免雙計污染量尺）；
+  順序無關。
+- **不設 K 週上限**：採整季累積（per leagueId）；換季 leagueId 改變自動開新基準，體積僅數 KB。
+- **缺值/無法解析的 per-team 樣本一律排除於 pool 外**（不以 0 併入），以免拉動中位數/MAD 與聯盟比率。
+- **比率項的聯盟比率** 採出手量加權的 `Σmakes / Σattempts`（非各隊比率的未加權平均）。
+- **當週對「先前基準池」計分**（排除當週自身；bootstrap 例外）；當週與歷史的 impact 皆以
+  **同一個參考聯盟比率**（每次執行以先前池重算）計算，確保落在同一把尺上。
 
 ### 4.3 呈現
 
@@ -87,14 +98,34 @@
 
 ## 6. 留給 builder 決定的細節
 
-- baseline 的確切資料結構與 pool 上限 K（建議 ~20 週）。
+- baseline 的確切資料結構（整季累積、以 week 為 key、無 K 上限）。
 - MAD＝0 時的退路（建議：該項該隊 score 記 0，即視為等於基準中心）。
-- 無法解析出手量 / 缺值時的處理（建議：該項 score 以 0＝中性計，而非舊版的「最差」；
-  此為相對 v1 的行為變更，請審閱）。
 - 「校準中」提示的確切文字、位置與何時淡出（例如累積 ≥3 週後不再顯示）。
 - 雷達軸的實際範圍與刻度。
 - Total 顯示的小數位與是否加正負號。
 - 純函式的命名與擺位（延續 `NbaStats`）。
+
+## 8. 實作前提（blocking）——待使用者驗證
+
+整個 volume-weighted 方法仰賴 live matchup 頁確有「命中/出手」資料。使用者選擇
+「先確認再開工」，因此**本設計在驗證通過前不進入實作計畫**。
+
+請在已登入 Yahoo 的狀態下，開一個 matchup 頁（例如
+`https://basketball.fantasysports.yahoo.com/nba/<聯盟>/matchup?date=totals&week=1&mid1=1&mid2=2`），
+按 F12 → Console 貼上並執行：
+
+```js
+const t = document.querySelector('#matchup-wall-header > table');
+console.log([...t.querySelectorAll('thead th')].map(th => th.innerText));
+console.log([...t.querySelectorAll('tbody tr')][0] &&
+  [...[...t.querySelectorAll('tbody tr')][0].querySelectorAll('td')].map(td => td.innerText));
+```
+
+把印出的兩個陣列回報。要確認：
+- 有 `FGM/A`、`FTM/A`、`3PTA`（或帶 `*`）欄，且值為「命中/出手」如 `320/700`、`3PTA` 為出手數。
+- 若只有百分比、或沒有這些欄 → 需改設計（比率項退回對原始百分比做 robust z，或改抓其他來源）。
+
+驗證通過後，才 `writing-plans` 排實作。
 
 ## 7. 成功樣貌
 
