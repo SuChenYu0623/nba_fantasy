@@ -59,3 +59,19 @@ test('scoreItems：空值視為最差，不會壓低整欄 min', () => {
   assert.strictEqual(c['PTS_score'], 20); // 空值 → 最差 20
   assert.strictEqual(b['PTS_score'], 20); // 80 為有效值最小 → 20（若空值被當 0 會變 ~73）
 });
+
+// ===== 正規化 v2 =====
+const { median, mad, parseRatio, RATE_METRICS, COUNTING_METRICS } = require('../lib/stats.js');
+test('median / mad', () => {
+  assert.strictEqual(median([10,20,30]), 20);
+  assert.strictEqual(mad([10,20,30]), 10);        // |−10|,0,|10| → median=10
+  assert.strictEqual(median([]), null);
+});
+test('parseRatio', () => {
+  assert.deepStrictEqual(parseRatio('51/118'), { made:51, att:118 });
+  assert.strictEqual(parseRatio('—'), null);
+});
+test('metric 分組', () => {
+  assert.deepStrictEqual(RATE_METRICS, ["FG%","FT%","3PT%"]);
+  assert.ok(!COUNTING_METRICS.includes("FG%") && COUNTING_METRICS.includes("TO"));
+});
