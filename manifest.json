@@ -34,7 +34,7 @@
   "content_scripts": [
     {
       "matches": ["https://basketball.fantasysports.yahoo.com/*"],
-      "js": ["content.js"]
+      "js": ["lib/stats.js", "lib/render.js", "content.js"]
     }
   ],
   "icons": {
