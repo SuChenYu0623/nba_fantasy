@@ -1,13 +1,14 @@
 const test = require('node:test');
 const assert = require('node:assert');
-const { scoreItems, rankColumns } = require('../lib/stats.js');
+const { scoreWeek, poolStats, rankColumns } = require('../lib/stats.js');
 const { buildTablePage } = require('../lib/render.js');
 
 function sample() {
-  const rows = scoreItems([
+  const stats = poolStats({ weeks:{ '1':{ counting:{ PTS:[50,100], TO:[5,20] }, rate:{} } } });
+  const rows = scoreWeek([
     { Team:'蒼鷹', 'PTS':'100','TO':'5','FGM/A*':'45/90' },
     { Team:'烈焰<x>', 'PTS':'50','TO':'20','FGM/A*':'30/80' },
-  ]);
+  ], stats);
   rankColumns(rows);
   return rows;
 }

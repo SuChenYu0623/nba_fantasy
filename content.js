@@ -265,10 +265,27 @@ form.addEventListener("submit", async (e) => {
       setProgress(cur, total, !!done);
     });
 
-    // 評分 → 小名次（reverse-aware）→ 產頁
-    const items = NbaStats.scoreItems(itemsRaw);
-    NbaStats.rankColumns(items);
-    openTableTab(items, { title: `League Table - Week ${week}` }, { table: tableWin, radar: radarWin });
+    // 從網址取聯盟 id 當基準 key（crawl 已驗證過其存在）
+    const leagueId = window.location.pathname.match(/\/nba\/(\d+)/)?.[1];
+    const key = `baseline:${leagueId}`;
+
+    // 載入該聯盟基準；以「排除當週」的先前池當量尺；先前池為空則 bootstrap 用當週
+    const stored = (await chrome.storage.local.get(key))[key];
+    const baseline = stored || { weeks: {} };
+    const prior = { weeks: Object.assign({}, baseline.weeks) };
+    delete prior.weeks[String(week)];
+    const priorWeeks = NbaStats.baselineWeekCount(prior);
+    const stats = priorWeeks === 0
+      ? NbaStats.poolStats(NbaStats.updateBaseline(prior, itemsRaw, week))
+      : NbaStats.poolStats(prior);
+
+    // 計分（跨週可比戰力值）→ 小名次 → 產頁
+    NbaStats.scoreWeek(itemsRaw, stats);
+    NbaStats.rankColumns(itemsRaw);
+    openTableTab(itemsRaw, { title: `League Table - Week ${week}`, weeks: priorWeeks }, { table: tableWin, radar: radarWin });
+
+    // 把本週併入基準並存回（以 week 為 key、取代）
+    await chrome.storage.local.set({ [key]: NbaStats.updateBaseline(baseline, itemsRaw, week) });
   } catch (err) {
     console.error(err);
     progressLabel.textContent = "發生錯誤，請稍後重試。";
@@ -339,9 +356,10 @@ function openTableTab(rows, opts = {}, targetWins = {}) {
     return;
   }
   const title = opts.title || "League Table";
-  showInTab(targetWins.table, NbaRender.buildTablePage(rows, { title }));
+  const weeks = opts.weeks;
+  showInTab(targetWins.table, NbaRender.buildTablePage(rows, { title, weeks }));
   // rows 已含 Team 與 <metric>_score，buildRadarPage 直接取用；index 0 = Rank 1
-  showInTab(targetWins.radar, NbaRender.buildRadarPage(rows, CHARTJS_URL));
+  showInTab(targetWins.radar, NbaRender.buildRadarPage(rows, CHARTJS_URL, { weeks }));
 }
 
 // 把 HTML 以 Blob 載入指定分頁；沒有預開分頁時退回 window.open。
