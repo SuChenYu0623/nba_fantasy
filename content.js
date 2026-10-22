@@ -268,7 +268,6 @@ async function runCrawlAndShow(weekRaw) {
   const week = String(weekRaw).trim();
   if (!week) return;
 
-  const tableWinGuard = null; // 已無 Blob 分頁
   try {
     disableForm(true);
     showProgress(true);
@@ -307,7 +306,6 @@ async function runCrawlAndShow(weekRaw) {
     console.error(err);
     progressLabel.textContent = "發生錯誤，請稍後重試。";
   } finally {
-    void tableWinGuard;
     disableForm(false);
     input.value = "";
     setTimeout(() => showProgress(false), 800);
@@ -376,9 +374,7 @@ function buildOverlayHost() {
 
   overlayShadow.querySelector(".backdrop").addEventListener("click", hideOverlay);
   overlayShadow.querySelector(".ov-close").addEventListener("click", hideOverlay);
-  overlayShadow.querySelector(".ov-refresh").addEventListener("click", () => {
-    if (OV) runCrawlAndShow(OV.week);
-  });
+  // 「重新整理」鈕由 renderOverlay 動態注入 .ov-meta 後再綁定（此處 markup 尚無該鈕）
   overlayShadow.querySelectorAll(".tab").forEach((btn) =>
     btn.addEventListener("click", () => showTab(btn.getAttribute("data-tab")))
   );
@@ -525,7 +521,6 @@ function renderOverlay(ctx) {
     trend: { focusIdx: 0, series: null, weeks: null },
     charts: { radar: null, trend: null },
     sort: { i: -1, dir: 1 },
-    sortedRows: ctx.rows.slice(), // 預設照 Rank 順序
   };
 
   const q = (s) => overlayShadow.querySelector(s);
