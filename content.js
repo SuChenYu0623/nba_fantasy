@@ -263,10 +263,24 @@ async function crawlItems(week, onTick) {
 // Lifecycle：送出 / 重新整理 / 開啟儀表板
 // ============================================================
 
+// 抓取中旗標：防止送出／重新整理連點造成同時多次爬取
+let crawlInFlight = false;
+function setRefreshBusy(busy) {
+  const btn = overlayShadow ? overlayShadow.querySelector(".ov-refresh") : null;
+  if (btn) {
+    btn.disabled = busy;
+    btn.style.opacity = busy ? ".5" : "1";
+    btn.style.pointerEvents = busy ? "none" : "";
+  }
+}
+
 // 送出或重新整理：爬 → 計分 → 寫結果快取（完整 rows + ts + lastWeek）→ 基準寫回 → 開 overlay
 async function runCrawlAndShow(weekRaw) {
   const week = String(weekRaw).trim();
   if (!week) return;
+  if (crawlInFlight) return; // 抓取中不重入（防連點）
+  crawlInFlight = true;
+  setRefreshBusy(true);
 
   try {
     disableForm(true);
@@ -306,6 +320,8 @@ async function runCrawlAndShow(weekRaw) {
     console.error(err);
     progressLabel.textContent = "發生錯誤，請稍後重試。";
   } finally {
+    crawlInFlight = false;
+    setRefreshBusy(false);
     disableForm(false);
     input.value = "";
     setTimeout(() => showProgress(false), 800);
