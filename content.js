@@ -282,7 +282,8 @@ form.addEventListener("submit", async (e) => {
     // 計分（跨週可比戰力值）→ 小名次 → 產頁
     NbaStats.scoreWeek(itemsRaw, stats);
     NbaStats.rankColumns(itemsRaw);
-    openTableTab(itemsRaw, { title: `League Table - Week ${week}`, weeks: priorWeeks }, { table: tableWin, radar: radarWin });
+    // 校準提示顯示「含本週」的累積週數（priorWeeks 不含當週，+1 才讀得通）
+    openTableTab(itemsRaw, { title: `League Table - Week ${week}`, weeks: priorWeeks + 1 }, { table: tableWin, radar: radarWin });
 
     // 把本週併入基準並存回（以 week 為 key、取代）
     await chrome.storage.local.set({ [key]: NbaStats.updateBaseline(baseline, itemsRaw, week) });
