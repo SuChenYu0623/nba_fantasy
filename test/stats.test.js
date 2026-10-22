@@ -106,3 +106,22 @@ test('跨週可比：量尺固定時，A 的分數不受同週其他隊影響', 
   const a2 = scoreWeek([{Team:'A','PTS':'30'},{Team:'C','PTS':'25'}], s).find(r=>r.Team==='A')['PTS_score'];
   assert.strictEqual(a1, a2);
 });
+
+const { buildWeekSample, updateBaseline, baselineWeekCount } = require('../lib/stats.js');
+test('buildWeekSample：缺值排除於池外', () => {
+  const s = buildWeekSample([{Team:'A','PTS':'10'},{Team:'B','PTS':''}]);
+  assert.deepStrictEqual(s.counting.PTS, [10]);   // B 的空值不納入
+});
+test('updateBaseline：重跑同一週取代、不雙計', () => {
+  let b = { weeks:{} };
+  b = updateBaseline(b, [{Team:'A','PTS':'10'}], 5);
+  b = updateBaseline(b, [{Team:'A','PTS':'99'}], 5);  // 同一週再跑
+  assert.strictEqual(baselineWeekCount(b), 1);
+  assert.deepStrictEqual(b.weeks['5'].counting.PTS, [99]); // 取代，非 [10,99]
+});
+test('updateBaseline：不同週累積', () => {
+  let b = { weeks:{} };
+  b = updateBaseline(b, [{Team:'A','PTS':'10'}], 1);
+  b = updateBaseline(b, [{Team:'A','PTS':'20'}], 2);
+  assert.strictEqual(baselineWeekCount(b), 2);
+});
