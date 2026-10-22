@@ -30,3 +30,18 @@ test('隊名特殊字元有跳脫', () => {
 test('保留排序 script', () => {
   assert.ok(buildTablePage(sample()).includes('addEventListener'));
 });
+
+const { buildRadarPage } = require('../lib/render.js');
+const RD = [
+  { Team:'蒼鷹', 'PTS_score':90,'TO_score':80 },
+  { Team:'烈焰', 'PTS_score':50,'TO_score':40 },
+];
+test('雷達頁含 Chart.js 與資料、預設聚焦 Rank 1', () => {
+  const html = buildRadarPage(RD, 'chart.js');
+  assert.ok(html.includes('chart.js'));
+  assert.ok(html.includes('蒼鷹'));          // 內嵌資料
+  assert.ok(html.includes('radar'));          // Chart.js radar 設定
+});
+test('僅 1 隊也不報錯（下限 0 比較）', () => {
+  assert.doesNotThrow(() => buildRadarPage([RD[0]], 'chart.js'));
+});
