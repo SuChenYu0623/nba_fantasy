@@ -29,3 +29,20 @@ test('隊數非 12 也能運作（3 隊）', () => {
   assert.strictEqual(rows.length, 3);
   assert.deepStrictEqual(rows.map(r=>r.Rank), [1,2,3]);
 });
+
+const { scoreItems: si2, rankColumns } = require('../lib/stats.js');
+test('rankColumns：TO 失誤少者小名次在前（修正反向）', () => {
+  const rows = si2([
+    { Team:'Low', 'TO':'5'  },   // 失誤少 → 應 rank 1
+    { Team:'High','TO':'20' },
+  ]);
+  rankColumns(rows);
+  const low = rows.find(r=>r.Team==='Low');
+  assert.strictEqual(low['TO_rank'], 1);
+});
+test('rankColumns：平手給相同名次', () => {
+  const rows = si2([{Team:'A','PTS':'10'},{Team:'B','PTS':'10'},{Team:'C','PTS':'1'}]);
+  rankColumns(rows);
+  const a = rows.find(r=>r.Team==='A'), b = rows.find(r=>r.Team==='B');
+  assert.strictEqual(a['PTS_rank'], b['PTS_rank']);
+});
