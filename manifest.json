@@ -4,8 +4,11 @@
   "version": "1.0",
   "description": "...",
   "permissions": [
-    "storage", "activeTab", "scripting", 
-    "declarativeNetRequest", "declarativeNetRequestWithHostAccess"
+    "storage",
+    "activeTab",
+    "scripting",
+    "declarativeNetRequest",
+    "declarativeNetRequestWithHostAccess"
   ],
   "host_permissions": [
     "https://basketball.fantasysports.yahoo.com/*",
@@ -18,14 +21,23 @@
       {
         "id": "block_images",
         "enabled": true,
-        "path": "rules.json"
+        "path": "rules-images.json"
+      },
+      {
+        "id": "block_ads",
+        "enabled": true,
+        "path": "rules-ads.json"
       }
     ]
   },
   "web_accessible_resources": [
     {
-      "resources": ["blank.png", "chart.umd.min.js"],
-      "matches": ["<all_urls>"]
+      "resources": [
+        "blank.png"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
     }
   ],
   "background": {
@@ -33,8 +45,15 @@
   },
   "content_scripts": [
     {
-      "matches": ["https://basketball.fantasysports.yahoo.com/*"],
-      "js": ["lib/stats.js", "lib/render.js", "content.js"]
+      "matches": [
+        "https://basketball.fantasysports.yahoo.com/*"
+      ],
+      "js": [
+        "chart.umd.min.js",
+        "lib/stats.js",
+        "lib/render.js",
+        "content.js"
+      ]
     }
   ],
   "icons": {

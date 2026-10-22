@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "priority": 5,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/blank.png"
+      }
+    },
+    "condition": {
+      "resourceTypes": [
+        "image"
+      ],
+      "urlFilter": "s.yimg.com/iu/api/res"
+    }
+  }
+]
