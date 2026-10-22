@@ -1,0 +1,45 @@
+[
+  {
+    "id": 10,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "pbs.yahoo.com",
+      "resourceTypes": [
+        "ping",
+        "xmlhttprequest",
+        "fetch"
+      ]
+    }
+  },
+  {
+    "id": 11,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "prebid",
+      "resourceTypes": [
+        "ping",
+        "xmlhttprequest",
+        "fetch"
+      ]
+    }
+  },
+  {
+    "id": 12,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "urlFilter": "oath-player.js",
+      "resourceTypes": [
+        "script"
+      ]
+    }
+  }
+]
