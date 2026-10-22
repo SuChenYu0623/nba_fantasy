@@ -1,0 +1,53 @@
+{
+  "manifest_version": 3,
+  "name": "nba fantasy 輔助功能",
+  "version": "1.0",
+  "description": "...",
+  "permissions": [
+    "storage", "activeTab", "scripting", 
+    "declarativeNetRequest", "declarativeNetRequestWithHostAccess"
+  ],
+  "host_permissions": [
+    "https://basketball.fantasysports.yahoo.com/*",
+    "https://s.yimg.com/*",
+    "https://pbs.yahoo.com/*",
+    "https://cdn.taboola.com/*"
+  ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "block_images",
+        "enabled": true,
+        "path": "rules.json"
+      }
+    ]
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["blank.png", "chart.umd.min.js"],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://basketball.fantasysports.yahoo.com/*"],
+      "js": ["content.js"]
+    }
+  ],
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    },
+    "default_title": "NBA Fantasy 輔助功能"
+  }
+}
