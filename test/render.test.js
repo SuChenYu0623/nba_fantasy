@@ -75,3 +75,19 @@ test('timeAgo 分桶', () => {
   assert.ok(/分鐘前$/.test(timeAgo(now-5*60_000, now)));
   assert.ok(/小時前$/.test(timeAgo(now-3*3600_000, now)));
 });
+
+const { radarDatasets, trendDatasets } = require('../lib/render.js');
+test('radarDatasets：主隊 fill、比較上限內、空/越界不報錯', () => {
+  const rows = [{Team:'A','PTS_score':1},{Team:'B','PTS_score':-1}];
+  const ds = radarDatasets(rows, 0, [1]);
+  assert.strictEqual(ds.length, 2);
+  assert.strictEqual(ds[0].fill, true);
+  assert.doesNotThrow(()=>radarDatasets(rows, 5, []));
+  assert.doesNotThrow(()=>radarDatasets([], 0, []));
+});
+test('trendDatasets：focus 加粗、其餘淡', () => {
+  const series = [{team:'A',totals:[1,2]},{team:'B',totals:[0,-1]}];
+  const ds = trendDatasets(series, 0);
+  assert.ok(ds[0].borderWidth > ds[1].borderWidth);
+  assert.doesNotThrow(()=>trendDatasets(series, 9));
+});
