@@ -46,3 +46,16 @@ test('rankColumns：平手給相同名次', () => {
   const a = rows.find(r=>r.Team==='A'), b = rows.find(r=>r.Team==='B');
   assert.strictEqual(a['PTS_rank'], b['PTS_rank']);
 });
+
+const { toNum } = require('../lib/stats.js');
+test('toNum：空字串/空白視為缺值 null（不得當成 0）', () => {
+  assert.strictEqual(toNum(''), null);
+  assert.strictEqual(toNum('   '), null);
+  assert.strictEqual(toNum('45.6'), 45.6);
+});
+test('scoreItems：空值視為最差，不會壓低整欄 min', () => {
+  const rows = si2([{Team:'A','PTS':'120'},{Team:'B','PTS':'80'},{Team:'C','PTS':''}]);
+  const b = rows.find(r=>r.Team==='B'), c = rows.find(r=>r.Team==='C');
+  assert.strictEqual(c['PTS_score'], 20); // 空值 → 最差 20
+  assert.strictEqual(b['PTS_score'], 20); // 80 為有效值最小 → 20（若空值被當 0 會變 ~73）
+});
