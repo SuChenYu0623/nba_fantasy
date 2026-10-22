@@ -95,3 +95,27 @@ test('updateBaseline：不同週累積', () => {
   b = updateBaseline(b, [{Team:'A','PTS':'20'}], 2);
   assert.strictEqual(baselineWeekCount(b), 2);
 });
+
+const { trendSeries } = require('../lib/stats.js');
+const BL = { weeks:{ '1':{ counting:{ PTS:[10,30], TO:[5,25] }, rate:{ 'FG%':[{made:40,att:100},{made:60,att:100}] } } } };
+const RC = {
+  lastWeek: 2,
+  '1': { rows:[ {Team:'A','PTS':'30','TO':'5','FGM/A*':'60/100'}, {Team:'B','PTS':'10','TO':'25','FGM/A*':'40/100'} ] },
+  '2': { rows:[ {Team:'A','PTS':'30','TO':'5','FGM/A*':'60/100'}, {Team:'B','PTS':'10','TO':'25','FGM/A*':'40/100'} ] },
+};
+test('trendSeries：週升冪、每隊對齊', () => {
+  const t = trendSeries(RC, BL);
+  assert.deepStrictEqual(t.weeks, [1,2]);
+  assert.deepStrictEqual(t.series.map(s=>s.team).sort(), ['A','B']);
+  assert.strictEqual(t.series[0].totals.length, 2);
+});
+test('跨週可比：同隊相同資料兩週 → Total 相同（尺固定）', () => {
+  const t = trendSeries(RC, BL);
+  const A = t.series.find(s=>s.team==='A');
+  assert.strictEqual(A.totals[0], A.totals[1]);
+});
+test('比率項有貢獻：含 FGM/A* 時 Total 不等於純計數加總', () => {
+  const t = trendSeries(RC, BL);
+  const noRate = trendSeries({ '1':{ rows:[{Team:'A','PTS':'30','TO':'5'}] }, lastWeek:1 }, BL);
+  assert.notStrictEqual(t.series.find(s=>s.team==='A').totals[0], noRate.series[0].totals[0]);
+});
