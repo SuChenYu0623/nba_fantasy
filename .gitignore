@@ -1,6 +1,9 @@
 # Chrome 載入未封裝擴充功能時自動產生的編譯 ruleset，不該進版控
 _metadata/
 
+# Superpowers 視覺 brainstorm 的暫存 mockup
+.superpowers/
+
 # OS / 編輯器雜物
 Thumbs.db
 .DS_Store
