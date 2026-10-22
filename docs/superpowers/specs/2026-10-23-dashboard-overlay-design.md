@@ -1,7 +1,7 @@
 # 頁內儀表板 overlay + 效能模式開關 設計文件
 
 日期：2026-10-23
-狀態：待審查
+狀態：待使用者過目（builder 審查已完成並納入）
 
 ## 1. 背景與動機（Why）
 
@@ -39,8 +39,10 @@
 
 ### 4.1 UI 結構
 
-- **角落啟動器**（Shadow DOM 常駐）：週次輸入、送出、**效能模式開關**。
+- **角落啟動器**（Shadow DOM 常駐）：週次輸入、送出、**開啟儀表板**鈕、**效能模式開關**。
 - 送出 → 爬蟲 → v2 計分 → 存快取 → **彈出全幅 overlay**（半透明背景 + 中央 sheet + ✕ 關閉）。
+- **開啟儀表板**鈕：**不重抓**，直接開本聯盟 `lastWeek` 的快取結果；**無快取**時提示「請先送出」。
+- **不自動彈出**：overlay 只在「送出」或按「開啟儀表板」時出現；每次 Yahoo 頁面載入**不會**自己跳出來（啟動器照常注入）。
 - overlay 標頭：標題、League/Week、**「資料時間 X 分鐘前 · 重新整理」**、✕。
 - 標頭下：分頁列（表格 / 雷達 / 趨勢）+ 校準提示（沿用 v2 的「已累積 N 週」）。
 - overlay 與啟動器皆在 **Shadow DOM**（樣式隔離、極高 z-index）。
@@ -59,8 +61,10 @@
   存回 → 渲染。
 - **開啟 overlay / 切分頁**：讀快取直接渲染，**不重抓**。
 - **結果快取**（`chrome.storage.local`，與 v2 基準分開存）：
-  `result:<leagueId>` = `{ [week]: { rows:[{Team, <metric>:原始值, …, <metric>_score, Total, Rank}], ts:<epoch毫秒> }, lastWeek:<n> }`
-  - `rows` 同時保留**原始數據**（供趨勢重算）與**當次算好的分數/Total**（供表格秒開、數字與送出當下一致）。
+  `result:<leagueId>` = `{ [week]: { rows:[{…完整 scraped item…, <metric>_score, Total, Rank}], ts:<epoch毫秒> }, lastWeek:<n> }`
+  - `rows` 必須保留**完整 scraped item**——不只 11 個顯示項，**含 `FGM/A*`、`FTM/A*`、`3PTA*` 等出手量欄**
+    （趨勢重算比率項要用；只存 11 項會讓三個比率項被當 0、趨勢錯誤且不易察覺）。
+  - 同時保留**當次算好的分數/Total**（供表格秒開、數字與送出當下一致）。
   - 開 overlay 預設顯示 `lastWeek` 的結果。
 - **資料時間**：由 `ts` 與現在時間算「X 分鐘前」。
 
@@ -82,6 +86,9 @@
 - 開關狀態存 `chrome.storage.local`；**background service worker** 以
   `chrome.declarativeNetRequest.updateEnabledRulesets` 啟用/停用 `block_images`。
 - **首次預設 ON**（維持現狀「封圖」），之後以使用者最後選擇為準。
+- **安裝/更新時對齊**：Chrome 在擴充功能更新時會把 enabled ruleset 重置成 manifest 預設，故 worker 須於
+  `onInstalled` / `onStartup` 讀取 storage 旗標並用 `updateEnabledRulesets` 校準，否則使用者關掉的封圖會在更新後
+  自己變回 ON（違背「記住設定」）。
 - 切換影響「之後」的請求（已載入的圖需重整才變），UI 可小字提示。
 
 ## 5. 限制（Constraints）
