@@ -75,3 +75,34 @@ test('metric 分組', () => {
   assert.deepStrictEqual(RATE_METRICS, ["FG%","FT%","3PT%"]);
   assert.ok(!COUNTING_METRICS.includes("FG%") && COUNTING_METRICS.includes("TO"));
 });
+
+const { poolStats, scoreWeek } = require('../lib/stats.js');
+const BASE = { weeks: { '1': {
+  counting: { PTS:[10,20,30], TO:[10,20,30] },
+  rate: { 'FG%':[{made:40,att:100},{made:60,att:100}] }
+} } };
+test('計數項 robust z（PTS=30 → +1）', () => {
+  const rows = scoreWeek([{Team:'A','PTS':'30'}], poolStats(BASE));
+  assert.strictEqual(rows[0]['PTS_score'], 1);
+});
+test('TO 取負（TO 少 → 正分）', () => {
+  const rows = scoreWeek([{Team:'A','TO':'10'}], poolStats(BASE));
+  assert.strictEqual(rows[0]['TO_score'], 1);   // (10−20)/10=−1 → 取負 → +1
+});
+test('volume weighting：同%、出手量加倍 → 分數加倍', () => {
+  const s = poolStats(BASE);
+  const lo = scoreWeek([{Team:'A','FGM/A*':'60/100'}], s)[0]['FG%_score'];
+  const hi = scoreWeek([{Team:'A','FGM/A*':'120/200'}], s)[0]['FG%_score'];
+  assert.ok(hi > lo && Math.abs(hi - 2*lo) < 1e-9);
+});
+test('缺值→中性 0；MAD=0→0', () => {
+  assert.strictEqual(scoreWeek([{Team:'A','PTS':''}], poolStats(BASE))[0]['PTS_score'], 0);
+  const flat = poolStats({ weeks:{'1':{counting:{PTS:[5,5,5]},rate:{}}} });
+  assert.strictEqual(scoreWeek([{Team:'A','PTS':'5'}], flat)[0]['PTS_score'], 0);
+});
+test('跨週可比：量尺固定時，A 的分數不受同週其他隊影響', () => {
+  const s = poolStats(BASE);
+  const a1 = scoreWeek([{Team:'A','PTS':'30'},{Team:'B','PTS':'10'}], s).find(r=>r.Team==='A')['PTS_score'];
+  const a2 = scoreWeek([{Team:'A','PTS':'30'},{Team:'C','PTS':'25'}], s).find(r=>r.Team==='A')['PTS_score'];
+  assert.strictEqual(a1, a2);
+});
