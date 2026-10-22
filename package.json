@@ -1,0 +1,1 @@
+{ "name": "nba-fantasy-ext", "private": true, "scripts": { "test": "node --test" } }
